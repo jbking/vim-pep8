@@ -152,13 +152,16 @@ if !exists("*s:WideMsg")
     endfun
 endif
 
-au BufEnter,BufWritePost <buffer> call s:RunPep8()
-au CursorHold,CursorHoldI <buffer> call s:RunPep8()
-au InsertLeave <buffer> call s:RunPep8()
+augroup plugin-vim-pep8
+    autocmd!
+    autocmd BufEnter,BufWritePost <buffer> call s:RunPep8()
+    autocmd CursorHold,CursorHoldI <buffer> call s:RunPep8()
+    autocmd InsertLeave <buffer> call s:RunPep8()
 
-au BufLeave <buffer> call s:ClearPep8()
+    autocmd BufLeave <buffer> call s:ClearPep8()
 
-au CursorHold,CursorMoved <buffer> call s:GetPep8Message()
+    autocmd CursorHold,CursorMoved <buffer> call s:GetPep8Message()
+augroup END
 
 if !exists("*s:Pep8Update")
     function s:Pep8Update()
