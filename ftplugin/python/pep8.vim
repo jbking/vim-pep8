@@ -21,22 +21,20 @@ let b:loaded_pep8_ftplugin = 1
 " The command to be used by this plugin
 let s:pep8_cmd="pep8"
 
-if !exists("b:did_pep8_init")
-    python << EOF
+python << EOM
 import os
 import sys
 import vim
 script_dir = os.path.dirname(vim.eval('expand("<sfile>")'))
-sys.path.insert(0, script_dir)
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
 
 # Must be imported
 from pep8checker import Pep8Checker
 
 def vim_quote(s):
     return s.replace("'", "''")
-EOF
-    let b:did_pep8_init = 1
-endif
+EOM
 
 function! s:ClearPep8()
     let s:matches = getmatches()
