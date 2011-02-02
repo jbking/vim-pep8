@@ -21,22 +21,27 @@ let b:loaded_pep8_ftplugin = 1
 " The command to be used by this plugin
 let s:pep8_cmd="pep8"
 
-if !exists("b:did_pep8_init")
-    python << EOF
+python << EOM
 import os
 import sys
 import vim
 script_dir = os.path.dirname(vim.eval('expand("<sfile>")'))
-sys.path.insert(0, script_dir)
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
 
 # Must be imported
 from pep8checker import Pep8Checker
 
+cmd = vim.eval('string(s:pep8_cmd)')
+
+# Because python interface space is shared over buffers,
+# avoid the instance overridden.
+if 'pep8_checker' not in locals():
+    pep8_checker = Pep8Checker(cmd)
+
 def vim_quote(s):
     return s.replace("'", "''")
-EOF
-    let b:did_pep8_init = 1
-endif
+EOM
 
 function! s:ClearPep8()
     let s:matches = getmatches()
@@ -63,8 +68,7 @@ function! s:RunPep8()
 
     let b:pep8_matchedlines = {}
     python << EOF
-cmd = vim.eval('string(s:pep8_cmd)')
-for (lineno, description) in Pep8Checker(cmd, vim.current.buffer).check():
+for (lineno, description) in pep8_checker.check(vim.current.buffer):
     vim.command("let s:matchDict = {}")
     vim.command("let s:matchDict['lineNum'] = " + lineno)
     vim.command("let s:matchDict['message'] = '%s'" % vim_quote(description))
