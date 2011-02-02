@@ -32,6 +32,13 @@ if script_dir not in sys.path:
 # Must be imported
 from pep8checker import Pep8Checker
 
+cmd = vim.eval('string(s:pep8_cmd)')
+
+# Because python interface space is shared over buffers,
+# avoid the instance overridden.
+if 'pep8_checker' not in locals():
+    pep8_checker = Pep8Checker(cmd)
+
 def vim_quote(s):
     return s.replace("'", "''")
 EOM
@@ -61,8 +68,7 @@ function! s:RunPep8()
 
     let b:pep8_matchedlines = {}
     python << EOF
-cmd = vim.eval('string(s:pep8_cmd)')
-for (lineno, description) in Pep8Checker(cmd, vim.current.buffer).check():
+for (lineno, description) in pep8_checker.check(vim.current.buffer):
     vim.command("let s:matchDict = {}")
     vim.command("let s:matchDict['lineNum'] = " + lineno)
     vim.command("let s:matchDict['message'] = '%s'" % vim_quote(description))
