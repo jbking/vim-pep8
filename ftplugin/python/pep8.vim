@@ -105,13 +105,16 @@ endfunction
 
 " WideMsg() prints [long] message up to (&columns-1) length
 " guaranteed without "Press Enter" prompt.
-function! s:WideMsg(msg)
-    let x=&ruler | let y=&showcmd
-    set noruler noshowcmd
-    redraw
-    echo a:msg
-    let &ruler=x | let &showcmd=y
-endfun
+if !exists("*s:WideMsg")
+    function s:WideMsg(msg)
+        let x=&ruler | let y=&showcmd
+        set noruler noshowcmd
+        redraw
+        let msg=substitute(a:msg, "\n", "", "")
+        echo strpart(msg, 0, &columns-1)
+        let &ruler=x | let &showcmd=y
+    endfun
+endif
 
 augroup plugin-vim-pep8
     autocmd!
