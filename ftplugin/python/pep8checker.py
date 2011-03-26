@@ -52,7 +52,7 @@ class Pep8Checker(object):
                 return []
             elif p.returncode == 1:
                 # we got any pep8 violations.
-                result = stdout.strip().split("\n")
+                pass
             elif p.returncode > 1:
                 # TODO: notify error by other reason
                 return []
@@ -61,7 +61,9 @@ class Pep8Checker(object):
 
         l = list()
         # Return each pep8 report
-        for line in result:
+        for line in stdout.split("\n"):
+            if not line.strip():
+                continue
             _path, line = line.split(':', 1)
             lineno, line = line.split(':', 1)
             _columnno, description = line.split(':', 1)
