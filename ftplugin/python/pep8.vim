@@ -20,6 +20,12 @@ let b:loaded_pep8_ftplugin = 1
 
 " The command to be used by this plugin
 let s:pep8_cmd="pep8"
+" Show all occurrences of the same error
+let s:pep8_args="-r" 
+" Skip errors and warnings (e.g. E4,W)
+if !exists("g:pep8_ignore")
+let g:pep8_ignore=""
+endif
 
 python << EOM
 import os
@@ -33,11 +39,16 @@ if script_dir not in sys.path:
 from pep8checker import Pep8Checker
 
 cmd = vim.eval('string(s:pep8_cmd)')
+args = vim.eval('string(s:pep8_args)')
+ignore = vim.eval('string(g:pep8_ignore)')
+
+if ignore: 
+    args = args + ' --ignore=%s' % ignore
 
 # Because python interface space is shared over buffers,
 # avoid the instance overridden.
 if 'pep8_checker' not in locals():
-    pep8_checker = Pep8Checker(cmd)
+    pep8_checker = Pep8Checker(cmd, args)
 
 def vim_quote(s):
     return s.replace("'", "''")

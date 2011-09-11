@@ -9,8 +9,9 @@ from ordered_dict import OrderedDict
 
 class Pep8Checker(object):
 
-    def __init__(self, cmd, cache_limit=10):
+    def __init__(self, cmd, args, cache_limit=10):
         self.cmd = cmd
+        self.args = args
         self.cache_limit = cache_limit
         self.cache = OrderedDict()
 
@@ -42,7 +43,7 @@ class Pep8Checker(object):
         finally:
             os.close(temp_file_fd)
 
-        cmd = "%s %s" % (self.cmd, temp_file_path)
+        cmd = "%s %s %s" % (self.cmd, self.args, temp_file_path)
 
         try:
             p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
