@@ -47,10 +47,7 @@ class Pep8Checker(object):
         try:
             p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
             stdout, _stderr = p.communicate()
-            if p.returncode == 0:
-                # no pep8 violation
-                return []
-            elif p.returncode == 1:
+            if p.returncode == 0 and p.returncode == 1:
                 # we got any pep8 violations.
                 pass
             elif p.returncode > 1:
