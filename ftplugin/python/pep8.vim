@@ -21,18 +21,35 @@ let b:loaded_pep8_ftplugin = 1
 " The command to be used by this plugin
 let s:pep8_cmd="pep8"
 
-python << EOM
+python << EOF
 import os
 import sys
 import vim
+
+# First, find the pep8, otherwise finish.
+cmd = vim.eval('s:pep8_cmd')
+
+vim.command("let s:pep8_found = 0")
+for path in os.environ['PATH'].split(os.pathsep):
+    pep8_path = os.path.join(path, cmd)
+    if os.path.isfile(pep8_path):
+        vim.command("let s:pep8_found = 1")
+        break
+EOF
+
+if !s:pep8_found
+    echoerr "pep8 not found. install it."
+    finish
+endif
+
+python << EOF
+# Insert the plugin directory as first.
 script_dir = os.path.dirname(vim.eval('expand("<sfile>")'))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
 # Must be imported
 from pep8checker import Pep8Checker
-
-cmd = vim.eval('string(s:pep8_cmd)')
 
 # Because python interface space is shared over buffers,
 # avoid the instance overridden.
@@ -41,7 +58,7 @@ if 'pep8_checker' not in locals():
 
 def vim_quote(s):
     return s.replace("'", "''")
-EOM
+EOF
 
 function! s:ClearPep8()
     let s:matches = getmatches()
