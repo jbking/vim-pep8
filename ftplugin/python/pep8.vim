@@ -7,7 +7,7 @@
 "
 " Language:    Python (ft=python)
 " Maintainer:  MURAOKA Yusuke <yusuke@jbking.org>
-" Version:     0.1
+" Version:     0.4.1
 " URL:         http://github.com/jbking/vim-pep8
 "
 " Thanks to pyflakes.vim. Almost inspired from you.
