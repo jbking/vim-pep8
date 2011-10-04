@@ -39,11 +39,11 @@ let s:save_cpo = &cpo
 set cpo&vim
 " }}}
 
-" Do once on each buffer. {{{
-if exists("b:loaded_pep8_ftplugin")
+" Do initialize once on each buffer. {{{
+if exists("b:pep8_ftplugin_loaded")
     finish
 endif
-let b:loaded_pep8_ftplugin = 1
+let b:pep8_ftplugin_loaded = 1
 " }}}
 
 " Params. {{{
