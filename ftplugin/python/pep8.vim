@@ -8,7 +8,7 @@
 "
 " Language:    Python (ft=python)
 " Maintainer:  MURAOKA Yusuke <yusuke@jbking.org>
-" Version:     0.4.1
+" Version:     0.5
 " URL:         http://github.com/jbking/vim-pep8
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
