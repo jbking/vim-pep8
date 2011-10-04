@@ -1,3 +1,4 @@
+"=============================================================================
 " vim-pep8 - A Python filetype plugin to check pep8 convention.
 "
 " Before use, please make sure below.
@@ -9,24 +10,54 @@
 " Maintainer:  MURAOKA Yusuke <yusuke@jbking.org>
 " Version:     0.4.1
 " URL:         http://github.com/jbking/vim-pep8
+" License: MIT license  {{{
+"     Permission is hereby granted, free of charge, to any person obtaining
+"     a copy of this software and associated documentation files (the
+"     "Software"), to deal in the Software without restriction, including
+"     without limitation the rights to use, copy, modify, merge, publish,
+"     distribute, sublicense, and/or sell copies of the Software, and to
+"     permit persons to whom the Software is furnished to do so, subject to
+"     the following conditions:
+"
+"     The above copyright notice and this permission notice shall be included
+"     in all copies or substantial portions of the Software.
+"
+"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+" }}}
 "
 " Thanks to pyflakes.vim. Almost inspired from you.
+"=============================================================================
 
-" Only do this when not done yet for this buffer
+" Saving 'cpoptions' {{{
+let s:save_cpo = &cpo
+set cpo&vim
+" }}}
+
+" Do once on each buffer. {{{
 if exists("b:loaded_pep8_ftplugin")
     finish
 endif
 let b:loaded_pep8_ftplugin = 1
+" }}}
 
+" Params. {{{
 " The command to be used by this plugin
 let s:pep8_cmd="pep8"
 " Show all occurrences of the same error
 let s:pep8_args="-r" 
 " Skip errors and warnings (e.g. E4,W)
 if !exists("g:pep8_ignore")
-let g:pep8_ignore=""
+  let g:pep8_ignore=""
 endif
+" }}}
 
+" Check existing of pep8 command. {{{
 python << EOF
 import os
 import sys
@@ -36,18 +67,24 @@ import vim
 cmd = vim.eval('s:pep8_cmd')
 
 vim.command("let s:pep8_found = 0")
-for path in os.environ['PATH'].split(os.pathsep):
-    pep8_path = os.path.join(path, cmd)
-    if os.path.isfile(pep8_path):
-        vim.command("let s:pep8_found = 1")
-        break
+if cmd.startswith(os.path.sep):
+    # Absolute path case
+    vm.command("let s:pep8_found = %d" % (1 if os.path.isfile(cmd) else 0))
+else:
+    for path in os.environ['PATH'].split(os.pathsep):
+        pep8_path = os.path.join(path, cmd)
+        if os.path.isfile(pep8_path):
+            vim.command("let s:pep8_found = 1")
+            break
 EOF
 
 if !s:pep8_found
     echoerr "pep8 not found. install it."
     finish
 endif
+" }}}
 
+" Initialize. {{{
 python << EOF
 # Insert the plugin directory as first.
 script_dir = os.path.dirname(vim.eval('expand("<sfile>")'))
@@ -71,8 +108,10 @@ if 'pep8_checker' not in locals():
 def vim_quote(s):
     return s.replace("'", "''")
 EOF
+" }}}
 
-function! s:ClearPep8()
+" Functions. {{{
+function! s:Clear() " {{{
     let s:matches = getmatches()
     for s:matchId in s:matches
         if s:matchId['group'] == 'Pep8'
@@ -82,13 +121,14 @@ function! s:ClearPep8()
     let b:pep8_matchedlines = {}
     let b:pep8_cleared = 1
 endfunction
+" }}}
 
-function! s:RunPep8()
+function! s:Run() " {{{
     highlight link Pep8 SpellBad
 
     if exists("b:pep8_cleared")
         if b:pep8_cleared == 0
-            silent call s:ClearPep8()
+            silent call s:Clear()
             let b:pep8_cleared = 1
         endif
     else
@@ -106,12 +146,13 @@ for (lineno, description) in pep8_checker.check(vim.current.buffer):
 EOF
     let b:pep8_cleared = 0
 endfunction
+" }}}
 
 let b:pep8_showing_message = 0
-function! s:GetPep8Message()
+function! s:GetMessage() " {{{
     let s:cursorPos = getpos(".")
 
-    " Bail if RunPep8 hasn't been called yet.
+    " Bail if s:Run() hasn't been called yet.
     if !exists('b:pep8_matchedlines')
         return
     endif
@@ -131,44 +172,55 @@ function! s:GetPep8Message()
         let b:pep8_showing_message = 0
     endif
 endfunction
+" }}}
 
 " WideMsg() prints [long] message up to (&columns-1) length
 " guaranteed without "Press Enter" prompt.
-if !exists("*s:WideMsg")
-    function s:WideMsg(msg)
-        let x=&ruler | let y=&showcmd
-        set noruler noshowcmd
-        redraw
-        let msg=substitute(a:msg, "\n", "", "")
-        echo strpart(msg, 0, &columns-1)
-        let &ruler=x | let &showcmd=y
-    endfun
-endif
+function! s:WideMsg(msg) " {{{
+    let x=&ruler | let y=&showcmd
+    set noruler noshowcmd
+    redraw
+    let msg=substitute(a:msg, "\n", "", "")
+    echo strpart(msg, 0, &columns-1)
+    let &ruler=x | let &showcmd=y
+endfun
+" }}}
 
-augroup plugin-vim-pep8
-    autocmd!
-    autocmd BufEnter,BufWritePost <buffer> call s:RunPep8()
-    autocmd CursorHold,CursorHoldI <buffer> call s:RunPep8()
-    autocmd InsertLeave <buffer> call s:RunPep8()
-
-    autocmd BufLeave <buffer> call s:ClearPep8()
-
-    autocmd CursorHold,CursorMoved <buffer> call s:GetPep8Message()
-augroup END
-
-" In same situation as pyflakes.vim
-noremap <buffer><silent> dd dd:Pep8Update<CR>
-noremap <buffer><silent> dw dw:Pep8Update<CR>
-noremap <buffer><silent> u u:Pep8Update<CR>
-noremap <buffer><silent> <C-R> <C-R>:Pep8Update<CR>
-
-
-function! s:Pep8Update()
-    silent call s:RunPep8()
-    call s:GetPep8Message()
+function! s:Update() " {{{
+    call s:Run()
+    call s:GetMessage()
 endfunction
+" }}}
+" }}}
 
-" Call this function in your .vimrc to update Pep8 state.
-if !exists(":Pep8Update")
-  command Pep8Update :call s:Pep8Update()
-endif
+" Commands. {{{
+command! Pep8Update :call s:Update()
+command! Pep8Clear :call s:Clear()
+command! Pep8GetMessage :call s:GetMessage()
+" }}}
+
+augroup plugin-vim-pep8 "{{{
+    autocmd!
+    autocmd BufEnter,BufWritePost <buffer> call s:Update()
+    autocmd CursorHold,CursorHoldI <buffer> call s:Update()
+    autocmd InsertLeave <buffer> call s:Update()
+    " Clear
+    autocmd BufLeave <buffer> call s:Clear()
+    " Just getting message at the line.
+    autocmd CursorHold,CursorMoved <buffer> call s:GetMessage()
+augroup END
+" }}}
+
+" In same situation as pyflakes.vim {{{
+noremap <buffer> <silent> dd dd:Pep8Update<CR>
+noremap <buffer> <silent> dw dw:Pep8Update<CR>
+noremap <buffer> <silent> u u:Pep8Update<CR>
+noremap <buffer> <silent> <C-R> <C-R>:Pep8Update<CR>
+" }}}
+
+" Restore 'cpoptions' {{{
+let &cpo = s:save_cpo
+unlet s:save_cpo
+" }}}
+" __END__
+" vim:foldmethod=marker:fen:sw=2:sts=2
