@@ -82,6 +82,10 @@ endif
 let s:match_group = 'Pep8'
 " }}}
 
+" Highlight group. {{{
+execute 'highlight link ' . s:match_group . ' SpellBad'
+" }}}
+
 " Check existing of pep8 command. {{{
 python << EOF
 import os
@@ -147,8 +151,9 @@ endfunction
 " }}}
 
 function! s:Run() " {{{
-    highlight link Pep8 SpellBad
-
+    if exists('b:pep8_matchedlines')
+        call s:Clear()
+    endif
     let b:pep8_matchedlines = {}
     python << EOF
 for (lineno, description) in pep8_checker.check(vim.current.buffer):
