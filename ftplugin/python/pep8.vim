@@ -34,27 +34,52 @@
 " Thanks to pyflakes.vim. Almost inspired from you.
 "=============================================================================
 
+" Do initialize on each buffer. {{{
+augroup plugin-vim-pep8 "{{{
+    autocmd! * <buffer>
+    autocmd BufEnter,BufWritePost <buffer> call s:Update()
+    autocmd CursorHold,CursorHoldI <buffer> call s:Update()
+    autocmd InsertLeave <buffer> call s:Update()
+    " Clear
+    autocmd BufLeave <buffer> call s:Clear()
+    " Just getting message at the line.
+    autocmd CursorHold,CursorMoved <buffer> call s:GetMessage()
+augroup END
+" }}}
+
+" In same situation as pyflakes.vim {{{
+noremap <buffer> dd dd:Pep8Update<CR>
+noremap <buffer> dw dw:Pep8Update<CR>
+noremap <buffer> u u:Pep8Update<CR>
+noremap <buffer> <C-R> <C-R>:Pep8Update<CR>
+" }}}
+" }}}
+
+" Do initialize below once. {{{
+if exists("g:pep8_ftplugin_loaded")
+    finish
+endif
+let g:pep8_ftplugin_loaded = 1
+
 " Saving 'cpoptions' {{{
 let s:save_cpo = &cpo
 set cpo&vim
 " }}}
 
-" Do initialize once on each buffer. {{{
-if exists("b:pep8_ftplugin_loaded")
-    finish
-endif
-let b:pep8_ftplugin_loaded = 1
-" }}}
-
 " Params. {{{
 " The command to be used by this plugin
-let s:pep8_cmd="pep8"
+if !exists("g:pep8_cmd")
+  let g:pep8_cmd="pep8"
+endif
 " Show all occurrences of the same error
-let s:pep8_args="-r" 
+if !exists("g:pep8_args")
+  let g:pep8_args="-r" 
+endif
 " Skip errors and warnings (e.g. E4,W)
 if !exists("g:pep8_ignore")
   let g:pep8_ignore=""
 endif
+let s:match_group = 'Pep8'
 " }}}
 
 " Check existing of pep8 command. {{{
@@ -64,7 +89,7 @@ import sys
 import vim
 
 # First, find the pep8, otherwise finish.
-cmd = vim.eval('s:pep8_cmd')
+cmd = vim.eval('g:pep8_cmd')
 
 vim.command("let s:pep8_found = 0")
 if cmd.startswith(os.path.sep):
@@ -94,16 +119,13 @@ if script_dir not in sys.path:
 # Must be imported
 from pep8checker import Pep8Checker
 
-args = vim.eval('string(s:pep8_args)')
+args = vim.eval('string(g:pep8_args)')
 ignore = vim.eval('string(g:pep8_ignore)')
 
 if ignore:
     args = args + ' --ignore=%s' % ignore
 
-# Because python interface space is shared over buffers,
-# avoid the instance overridden.
-if 'pep8_checker' not in locals():
-    pep8_checker = Pep8Checker(cmd, args)
+pep8_checker = Pep8Checker(cmd, args)
 
 def vim_quote(s):
     return s.replace("'", "''")
@@ -114,43 +136,36 @@ EOF
 function! s:Clear() " {{{
     let s:matches = getmatches()
     for s:matchId in s:matches
-        if s:matchId['group'] == 'Pep8'
+        if s:matchId['group'] == s:match_group
             call matchdelete(s:matchId['id'])
         endif
     endfor
-    let b:pep8_matchedlines = {}
-    let b:pep8_cleared = 1
+    if exists('b:pep8_matchedlines')
+        unlet b:pep8_matchedlines
+    endif
 endfunction
 " }}}
 
 function! s:Run() " {{{
     highlight link Pep8 SpellBad
 
-    if exists("b:pep8_cleared")
-        if b:pep8_cleared == 0
-            silent call s:Clear()
-            let b:pep8_cleared = 1
-        endif
-    else
-        let b:pep8_cleared = 1
-    endif
-
     let b:pep8_matchedlines = {}
     python << EOF
 for (lineno, description) in pep8_checker.check(vim.current.buffer):
-    vim.command("let s:matchDict = {}")
-    vim.command("let s:matchDict['lineNum'] = " + lineno)
-    vim.command("let s:matchDict['message'] = '%s'" % vim_quote(description))
-    vim.command("let s:mID = matchadd('Pep8', '\%" + lineno + "l\\n\@!')")
-    vim.command("let b:pep8_matchedlines[" + lineno + "] = s:matchDict")
+    vim.command("let matchDict = {}")
+    vim.command("let matchDict['lineNum'] = " + lineno)
+    vim.command("let matchDict['message'] = '%s'" % vim_quote(description))
+    vim.command("let matchDict['mID'] = matchadd(s:match_group, '\%" + lineno + "l\\n\@!')")
+    vim.command("let b:pep8_matchedlines[" + lineno + "] = matchDict")
 EOF
-    let b:pep8_cleared = 0
 endfunction
 " }}}
 
-let b:pep8_showing_message = 0
 function! s:GetMessage() " {{{
-    let s:cursorPos = getpos(".")
+    " Reset status message.
+    echo ""
+
+    let cursorPos = getpos(".")
 
     " Bail if s:Run() hasn't been called yet.
     if !exists('b:pep8_matchedlines')
@@ -159,17 +174,9 @@ function! s:GetMessage() " {{{
 
     " if there's a message for the line the cursor is currently on, echo
     " it to the console
-    if has_key(b:pep8_matchedlines, s:cursorPos[1])
-        let s:pep8Match = get(b:pep8_matchedlines, s:cursorPos[1])
-        call s:WideMsg(s:pep8Match['message'])
-        let b:pep8_showing_message = 1
-        return
-    endif
-
-    " otherwise, if we're showing a message, clear it
-    if b:pep8_showing_message == 1
-        echo ""
-        let b:pep8_showing_message = 0
+    if has_key(b:pep8_matchedlines, cursorPos[1])
+        let pep8Match = get(b:pep8_matchedlines, cursorPos[1])
+        call s:WideMsg(pep8Match['message'])
     endif
 endfunction
 " }}}
@@ -199,28 +206,10 @@ command! Pep8Clear :call s:Clear()
 command! Pep8GetMessage :call s:GetMessage()
 " }}}
 
-augroup plugin-vim-pep8 "{{{
-    autocmd!
-    autocmd BufEnter,BufWritePost <buffer> call s:Update()
-    autocmd CursorHold,CursorHoldI <buffer> call s:Update()
-    autocmd InsertLeave <buffer> call s:Update()
-    " Clear
-    autocmd BufLeave <buffer> call s:Clear()
-    " Just getting message at the line.
-    autocmd CursorHold,CursorMoved <buffer> call s:GetMessage()
-augroup END
-" }}}
-
-" In same situation as pyflakes.vim {{{
-noremap <buffer> <silent> dd dd:Pep8Update<CR>
-noremap <buffer> <silent> dw dw:Pep8Update<CR>
-noremap <buffer> <silent> u u:Pep8Update<CR>
-noremap <buffer> <silent> <C-R> <C-R>:Pep8Update<CR>
-" }}}
-
 " Restore 'cpoptions' {{{
 let &cpo = s:save_cpo
 unlet s:save_cpo
 " }}}
+" }}}
 " __END__
-" vim:foldmethod=marker:fen:sw=2:sts=2
+" vim:foldmethod=marker
