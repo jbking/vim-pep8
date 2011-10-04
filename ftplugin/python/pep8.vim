@@ -134,10 +134,10 @@ EOF
 
 " Functions. {{{
 function! s:Clear() " {{{
-    let s:matches = getmatches()
-    for s:matchId in s:matches
-        if s:matchId['group'] == s:match_group
-            call matchdelete(s:matchId['id'])
+    let matches = getmatches()
+    for matchId in matches
+        if matchId['group'] == s:match_group
+            call matchdelete(matchId['id'])
         endif
     endfor
     if exists('b:pep8_matchedlines')
