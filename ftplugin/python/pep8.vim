@@ -56,10 +56,10 @@ noremap <buffer> <C-R> <C-R>:Pep8Update<CR>
 " }}}
 
 " Do initialize below once. {{{
-if exists("g:pep8_ftplugin_loaded")
+if exists("s:pep8_ftplugin_loaded")
     finish
 endif
-let g:pep8_ftplugin_loaded = 1
+let s:pep8_ftplugin_loaded = 1
 
 " Saving 'cpoptions' {{{
 let s:save_cpo = &cpo
