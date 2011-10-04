@@ -75,6 +75,10 @@ endif
 if !exists("g:pep8_args")
   let g:pep8_args="-r" 
 endif
+" Select errors and warnings (e.g. E4,W)
+if !exists("g:pep8_select")
+  let g:pep8_select=""
+endif
 " Skip errors and warnings (e.g. E4,W)
 if !exists("g:pep8_ignore")
   let g:pep8_ignore=""
@@ -124,7 +128,11 @@ if script_dir not in sys.path:
 from pep8checker import Pep8Checker
 
 args = vim.eval('string(g:pep8_args)')
+select = vim.eval('string(g:pep8_select)')
 ignore = vim.eval('string(g:pep8_ignore)')
+
+if select:
+    args = args + ' --select=%s' % select
 
 if ignore:
     args = args + ' --ignore=%s' % ignore
