@@ -60,10 +60,10 @@ endif
 " }}}
 
 " Do initialize below once. {{{
-if exists("s:pep8_ftplugin_loaded")
+if exists("g:pep8_ftplugin_loaded")
     finish
 endif
-let s:pep8_ftplugin_loaded = 1
+let g:pep8_ftplugin_loaded = 1
 
 " Saving 'cpoptions' {{{
 let s:save_cpo = &cpo
@@ -95,27 +95,7 @@ execute 'highlight link ' . s:match_group . ' SpellBad'
 " }}}
 
 " Check existing of pep8 command. {{{
-python << EOF
-import os
-import sys
-import vim
-
-# First, find the pep8, otherwise finish.
-cmd = vim.eval('g:pep8_cmd')
-
-vim.command("let s:pep8_found = 0")
-if cmd.startswith(os.path.sep):
-    # Absolute path case
-    vm.command("let s:pep8_found = %d" % (1 if os.path.isfile(cmd) else 0))
-else:
-    for path in os.environ['PATH'].split(os.pathsep):
-        pep8_path = os.path.join(path, cmd)
-        if os.path.isfile(pep8_path):
-            vim.command("let s:pep8_found = 1")
-            break
-EOF
-
-if !s:pep8_found
+if !executable(g:pep8_cmd)
     echoerr "pep8 not found. install it."
     finish
 endif
@@ -123,6 +103,10 @@ endif
 
 " Initialize. {{{
 python << EOF
+import os
+import sys
+import vim
+
 # Insert the plugin directory as first.
 script_dir = os.path.dirname(vim.eval('expand("<sfile>")'))
 if script_dir not in sys.path:
@@ -131,6 +115,7 @@ if script_dir not in sys.path:
 # Must be imported
 from pep8checker import Pep8Checker
 
+cmd = vim.eval('string(g:pep8_cmd)')
 args = vim.eval('string(g:pep8_args)')
 select = vim.eval('string(g:pep8_select)')
 ignore = vim.eval('string(g:pep8_ignore)')
