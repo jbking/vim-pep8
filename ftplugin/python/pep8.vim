@@ -35,23 +35,27 @@
 "=============================================================================
 
 " Do initialize on each buffer. {{{
-augroup plugin-vim-pep8 "{{{
-    autocmd! * <buffer>
-    autocmd BufEnter,BufWritePost <buffer> call s:Update()
-    autocmd CursorHold,CursorHoldI <buffer> call s:Update()
-    autocmd InsertLeave <buffer> call s:Update()
-    " Clear
-    autocmd BufLeave <buffer> call s:Clear()
-    " Just getting message at the line.
-    autocmd CursorHold,CursorMoved <buffer> call s:GetMessage()
-augroup END
+if !exists("g:pep8_ignore_autocmd")
+    augroup plugin-vim-pep8 "{{{
+        autocmd! * <buffer>
+        autocmd BufEnter,BufWritePost <buffer> call s:Update()
+        autocmd CursorHold,CursorHoldI <buffer> call s:Update()
+        autocmd InsertLeave <buffer> call s:Update()
+        " Clear
+        autocmd BufLeave <buffer> call s:Clear()
+        " Just getting message at the line.
+        autocmd CursorHold,CursorMoved <buffer> call s:GetMessage()
+    augroup END
+endif
 " }}}
 
-" In same situation as pyflakes.vim {{{
-noremap <buffer> dd dd:Pep8Update<CR>
-noremap <buffer> dw dw:Pep8Update<CR>
-noremap <buffer> u u:Pep8Update<CR>
-noremap <buffer> <C-R> <C-R>:Pep8Update<CR>
+" Mappings in same situation as pyflakes.vim {{{
+if !exists("g:pep8_ignore_default_mapping")
+    noremap <buffer> dd dd:Pep8Update<CR>
+    noremap <buffer> dw dw:Pep8Update<CR>
+    noremap <buffer> u u:Pep8Update<CR>
+    noremap <buffer> <C-R> <C-R>:Pep8Update<CR>
+endif
 " }}}
 " }}}
 
