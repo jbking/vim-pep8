@@ -165,12 +165,15 @@ endfunction
 
 function! s:GetMessage() " {{{
     " Reset status message.
-    echo ""
+    if exists('b:pep8_need_clean') && b:pep8_need_clean
+        echo ""
+        let b:pep8_need_clean = 0
+    endif
 
     let cursorPos = getpos(".")
 
     " Bail if s:Run() hasn't been called yet.
-    if !exists('b:pep8_matchedlines')
+    if !exists('b:pep8_matchedlines') || empty(b:pep8_matchedlines)
         return
     endif
 
@@ -179,6 +182,7 @@ function! s:GetMessage() " {{{
     if has_key(b:pep8_matchedlines, cursorPos[1])
         let pep8Match = get(b:pep8_matchedlines, cursorPos[1])
         call s:WideMsg(pep8Match['message'])
+        let b:pep8_need_clean = 1
     endif
 endfunction
 " }}}
