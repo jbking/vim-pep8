@@ -157,7 +157,9 @@ for (lineno, description) in pep8_checker.check(vim.current.buffer):
     vim.command("let matchDict = {}")
     vim.command("let matchDict['lineNum'] = " + lineno)
     vim.command("let matchDict['message'] = '%s'" % vim_quote(description))
-    vim.command("let matchDict['mID'] = matchadd(s:match_group, '\%" + lineno + "l\\n\@!')")
+    # simple match is lighter than commented out one for current implemetation.
+    # vim.command("let matchDict['mID'] = matchadd(s:match_group, '\%" + lineno + "l\\n\@!')")
+    vim.command("let matchDict['mID'] = matchadd(s:match_group, '\%" + lineno + "l')")
     vim.command("let b:pep8_matchedlines[" + lineno + "] = matchDict")
 EOF
 endfunction
