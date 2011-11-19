@@ -34,6 +34,11 @@
 " Thanks to pyflakes.vim. Almost inspired from you.
 "=============================================================================
 
+" Saving 'cpoptions' {{{
+let s:save_cpo = &cpo
+set cpo&vim
+" }}}
+
 " Do initialize on each buffer. {{{
 if !exists("g:pep8_ignore_autocmd")
     augroup plugin-vim-pep8 "{{{
@@ -64,11 +69,6 @@ if exists("g:pep8_ftplugin_loaded")
     finish
 endif
 let g:pep8_ftplugin_loaded = 1
-
-" Saving 'cpoptions' {{{
-let s:save_cpo = &cpo
-set cpo&vim
-" }}}
 
 " Params. {{{
 " The command to be used by this plugin
