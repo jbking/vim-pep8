@@ -169,7 +169,6 @@ endfunction
 function! s:GetMessage() " {{{
     " Reset status message.
     if exists('b:pep8_need_reset_status') && b:pep8_need_reset_status
-        echo ""
         let b:pep8_need_reset_status = 0
     endif
 
