@@ -23,8 +23,6 @@ MIT license  {{{
 """
 
 from subprocess import Popen, PIPE
-import tempfile
-import os
 from hashlib import md5
 from ordered_dict import OrderedDict
 
@@ -55,32 +53,19 @@ class Pep8Checker(object):
     def _check(self, data):
         assert isinstance(data, (unicode, str))
 
-        # dump current data to a temp file to check on the fly.
-        temp_file_fd, temp_file_path = tempfile.mkstemp()
-        try:
-            os.write(temp_file_fd, data)
-        except:
-            os.unlink(temp_file_path)
-            raise
-        finally:
-            os.close(temp_file_fd)
+        cmd = "%s %s /dev/stdin" % (self.cmd, self.args)
 
-        cmd = "%s %s %s" % (self.cmd, self.args, temp_file_path)
-
-        try:
-            p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-            stdout, _stderr = p.communicate()
-            if p.returncode == 0:
-                # no pep8 violation.
-                return []
-            elif p.returncode == 1:
-                # we got any pep8 violations.
-                pass
-            elif p.returncode > 1:
-                # TODO: notify error by other reason
-                return []
-        finally:
-            os.unlink(temp_file_path)
+        p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        stdout, _stderr = p.communicate(data)
+        if p.returncode == 0:
+            # no pep8 violation.
+            return []
+        elif p.returncode == 1:
+            # we got any pep8 violations.
+            pass
+        elif p.returncode > 1:
+            # TODO: notify error by other reason
+            return []
 
         l = list()
         # Return each pep8 report
